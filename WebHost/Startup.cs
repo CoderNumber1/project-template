@@ -34,6 +34,11 @@ namespace InsertNamespace
             services.AddMvc();
 
             IntegrateSimpleInjector(services);
+
+            services.AddIdentityServer()
+                .AddDeveloperSigningCredential()
+                .AddInMemoryApiResources(Identity.InMemoryConfiguration.GetApiResources())
+                .AddInMemoryClients(Identity.InMemoryConfiguration.GetClients());
         }
 
         private void IntegrateSimpleInjector(IServiceCollection services)
@@ -63,6 +68,20 @@ namespace InsertNamespace
             {
                 app.UseExceptionHandler("/Home/Error");
             }
+
+            app.Map(
+                PathString.FromUriComponent("/identity"),
+                (a) =>
+                {
+                    a.UseStaticFiles();
+                    a.UseIdentityServer();
+                    a.UseMvc(routes =>
+                    {
+                        routes.MapRoute(
+                            name: "default",
+                            template: "{controller=Home}/{action=Index}/{id?}");
+                    });
+                });
 
             app.UseStaticFiles();
 
