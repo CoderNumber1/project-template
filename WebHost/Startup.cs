@@ -32,13 +32,26 @@ namespace InsertNamespace
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+            services.AddMvcCore()
+                .AddAuthorization()
+                .AddJsonFormatters();
+
+            services.AddAuthentication("Bearer")
+                .AddIdentityServerAuthentication(options =>
+                {
+                    options.Authority = "http://localhost:5000/identity";
+                    options.RequireHttpsMetadata = false;
+
+                    options.ApiName = "api1";
+                });
 
             IntegrateSimpleInjector(services);
 
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
                 .AddInMemoryApiResources(Identity.InMemoryConfiguration.GetApiResources())
-                .AddInMemoryClients(Identity.InMemoryConfiguration.GetClients());
+                .AddInMemoryClients(Identity.InMemoryConfiguration.GetClients())
+                .AddTestUsers(Identity.InMemoryConfiguration.GetUsers());
         }
 
         private void IntegrateSimpleInjector(IServiceCollection services)
@@ -97,6 +110,7 @@ namespace InsertNamespace
             //app.Use((c, next) => container.GetInstance<CustomMiddleware2>().Invoke(c, next));
 
             // ASP.NET default stuff here
+            app.UseAuthentication();
             app.UseMvc(routes =>
             {
                 routes.MapRoute(
