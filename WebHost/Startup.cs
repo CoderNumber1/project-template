@@ -14,6 +14,11 @@ using Microsoft.AspNetCore.Mvc.ViewComponents;
 using SimpleInjector;
 using Microsoft.Extensions.Logging;
 using InsertNamespace.Logging;
+using IdentityServer4.Services;
+using System.IdentityModel.Tokens.Jwt;
+using IdentityServer4.Stores;
+using Microsoft.AspNetCore.Authentication;
+using IdentityServer4.Test;
 
 namespace InsertNamespace
 {
@@ -36,10 +41,29 @@ namespace InsertNamespace
                 .AddAuthorization()
                 .AddJsonFormatters();
 
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
+            services.AddAuthentication(options =>
+                {
+                    options.DefaultScheme = "Cookies";
+                    options.DefaultChallengeScheme = "oidc";
+                })
+                .AddCookie("Cookies")
+                .AddOpenIdConnect("oidc", options =>
+                {
+                    options.SignInScheme = "Cookies";
+
+                    options.Authority = "https://localhost:5000/identity";
+                    options.RequireHttpsMetadata = false;
+
+                    options.ClientId = "mvc";
+                    options.SaveTokens = true;
+                });
+
             services.AddAuthentication("Bearer")
                 .AddIdentityServerAuthentication(options =>
                 {
-                    options.Authority = "http://localhost:5000/identity";
+                    options.Authority = "https://localhost:5000/identity";
                     options.RequireHttpsMetadata = false;
 
                     options.ApiName = "api1";
@@ -49,6 +73,7 @@ namespace InsertNamespace
 
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
+                .AddInMemoryIdentityResources(Identity.InMemoryConfiguration.GetIdentityResources())
                 .AddInMemoryApiResources(Identity.InMemoryConfiguration.GetApiResources())
                 .AddInMemoryClients(Identity.InMemoryConfiguration.GetClients())
                 .AddTestUsers(Identity.InMemoryConfiguration.GetUsers());
@@ -134,6 +159,13 @@ namespace InsertNamespace
             // Cross-wire ASP.NET services (if any). For instance:
             container.CrossWire<ILoggerFactory>(app);
             container.CrossWire<IHttpContextAccessor>(app);
+
+            container.CrossWire<IIdentityServerInteractionService>(app);
+            container.CrossWire<IClientStore>(app);
+            container.CrossWire<IAuthenticationSchemeProvider>(app);
+            container.CrossWire<IEventService>(app);
+            container.CrossWire<TestUserStore>(app);
+            container.CrossWire<IResourceStore>(app);
 
             // NOTE: Do prevent cross-wired instances as much as possible.
             // See: https://simpleinjector.org/blog/2016/07/

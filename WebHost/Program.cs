@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
+using System.Net;
 
 namespace InsertNamespace
 {
@@ -35,7 +36,11 @@ namespace InsertNamespace
                 Log.Information("Starting web host");
 
                 var host = new WebHostBuilder()
-                    .UseKestrel()
+                    .UseKestrel(options =>
+                    options.Listen(IPAddress.Loopback, 5000, listenOptions =>
+                    {
+                        listenOptions.UseHttps("test-cert.pfx", "password");
+                    }))
                     .UseIISIntegration()
                     .UseContentRoot(Directory.GetCurrentDirectory())
                     .UseStartup<Startup>()

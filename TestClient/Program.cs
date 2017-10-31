@@ -11,7 +11,7 @@ namespace TestClient
         static void Main(string[] args)
         {
             // discover endpoints from metadata
-            var disco = DiscoveryClient.GetAsync("http://localhost:5000/identity").Result;
+            var disco = DiscoveryClient.GetAsync("https://localhost:5000/identity").Result;
 
             // request token
             var tokenClient = new TokenClient(disco.TokenEndpoint, "client", "secret");
@@ -29,7 +29,7 @@ namespace TestClient
             var client = new HttpClient();
             client.SetBearerToken(tokenResponse.AccessToken);
 
-            var response = client.GetAsync("http://localhost:5000/api/identity").Result;
+            var response = client.GetAsync("https://localhost:5000/api/identity").Result;
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine(response.StatusCode);
@@ -56,7 +56,7 @@ namespace TestClient
             var roClient = new HttpClient();
             roClient.SetBearerToken(roTokenResponse.AccessToken);
 
-            var roResponse = roClient.GetAsync("http://localhost:5000/api/identity").Result;
+            var roResponse = roClient.GetAsync("https://localhost:5000/api/identity").Result;
             if (!roResponse.IsSuccessStatusCode)
             {
                 Console.WriteLine(roResponse.StatusCode);

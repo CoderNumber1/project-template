@@ -6,42 +6,50 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using InsertNamespace.Models;
 using InsertNamespace.Logging;
+using IdentityServer4.Services;
+using IdentityServer4.Quickstart.UI;
+using Microsoft.AspNetCore.Authorization;
 
 namespace InsertNamespace.Controllers
 {
+    [SecurityHeaders]
     public class HomeController : Controller
     {
         private ILog _log;
+        private readonly IIdentityServerInteractionService _interaction;
 
-        public HomeController(ILog log)
+        public HomeController(ILog log, IIdentityServerInteractionService interaction)
         {
             _log = log;
+            _interaction = interaction;
         }
 
         public IActionResult Index()
         {
-            _log.Write(LogLevel.Information, "Index page.", "page-hits");
-
             return View();
         }
 
+        [Authorize]
         public IActionResult About()
         {
-            ViewData["Message"] = "Your application description page.";
-
             return View();
         }
 
-        public IActionResult Contact()
+        /// <summary>
+        /// Shows the error page
+        /// </summary>
+        public async Task<IActionResult> Error(string errorId)
         {
-            ViewData["Message"] = "Your contact page.";
+            var vm = new ErrorViewModel() { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier };
 
-            return View();
-        }
+            // retrieve error details from identityserver
+            var message = await _interaction.GetErrorContextAsync(errorId);
+            if (message != null)
+            {
+                vm.Error = message;
+            }
 
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            return View("Error", vm);
         }
     }
 }
